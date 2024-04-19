@@ -31,7 +31,7 @@ export const OrderProductComponent = () => {
   };
   return (
     <>
-      <OrderToppingComponent ref={toppingRef} />
+      <OrderToppingComponent ref={toppingRef} key="topping" onOk={() => {}} />
       <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-5">
         {products.map((v, i) => (
           <div key={`product-${i}`} className="rounded-lg bg-white p-5">
