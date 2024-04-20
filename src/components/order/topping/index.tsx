@@ -1,8 +1,10 @@
 import { Button, Modal } from "antd";
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useReducer, useState } from "react";
 import { TProduct } from "../product/productSlice";
 import { MinusOutlined, PlusOutlined } from "@ant-design/icons";
 import { useAppSelector } from "@/hooks/redux";
+import { produce } from "immer";
+import { orderToppingInitState, orderToppingReducer } from "./reducer";
 
 export type OrderToppingComponentRef = {
   show(product: TProduct): void;
@@ -16,71 +18,37 @@ export const OrderToppingComponent = forwardRef<
   OrderToppingComponentRef,
   Props
 >(({ onOk }, ref) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [productCount, setProductCount] = useState(0);
-  const [toppingCount, setToppingCount] = useState<number[]>([]);
-  const [product, setProduct] = useState<TProduct>();
+  console.log("render");
+  const [state, dispatch] = useReducer(
+    orderToppingReducer,
+    orderToppingInitState,
+  );
   const toppings = useAppSelector((state) => state.toppingReducer.toppings);
 
   useImperativeHandle(
     ref,
     () => ({
       show: (_product) => {
-        setProduct(_product);
-        showModal();
+        dispatch({ type: "product", product: _product });
+        dispatch({ type: "open" });
       },
     }),
     [],
   );
 
-  const showModal = () => {
-    setIsModalOpen(true);
-  };
-
   const handleOk = () => {
-    setIsModalOpen(false);
+    dispatch({ type: "close" });
     onOk();
   };
 
   const handleCancel = () => {
-    setIsModalOpen(false);
-  };
-
-  const handlePlusClick = () => {
-    setProductCount((state) => state + 1);
-  };
-
-  const handleMinusClick = () => {
-    setProductCount((state) => state - 1);
-  };
-
-  const handlePlusTopping = (index: number) => {
-    setToppingCount((state) => {
-      if (state[index]) {
-        state[index] += 1;
-      } else {
-        state[index] = 1;
-      }
-      console.log(state);
-      return state;
-    });
-  };
-
-  const handleMinusTopping = (index: number) => {
-    setToppingCount((state) => {
-      if (state[index]) {
-        state[index] -= 1;
-      } else {
-        state[index] = 0;
-      }
-      return state;
-    });
+    dispatch({ type: "close" });
   };
 
   return (
     <Modal
-      title={product?.name}
-      open={isModalOpen}
+      title={state.product?.name}
+      open={state.isOpen}
       onOk={handleOk}
       onCancel={handleCancel}
       width="50%"
@@ -94,16 +62,16 @@ export const OrderToppingComponent = forwardRef<
                   size="small"
                   shape="circle"
                   icon={<PlusOutlined />}
-                  onClick={() => handlePlusTopping(i)}
+                  onClick={() => dispatch({ type: "topping_plus", index: i })}
                 />
                 <div className="inline-block w-6 text-center">
-                  {toppingCount[i] ?? 0}
+                  {state.toppingCount[i] ?? 0}
                 </div>
                 <Button
                   size="small"
                   shape="circle"
                   icon={<MinusOutlined />}
-                  onClick={() => handleMinusTopping(i)}
+                  onClick={() => dispatch({ type: "topping_minus", index: i })}
                 />
               </div>
               <p>{v.name}</p>
@@ -114,15 +82,15 @@ export const OrderToppingComponent = forwardRef<
           <Button
             shape="circle"
             icon={<PlusOutlined />}
-            onClick={handlePlusClick}
+            onClick={() => dispatch({ type: "product_plus" })}
           />
           <div className="inline-block w-10 text-center text-lg font-semibold text-primary-500">
-            {productCount}
+            {state.count}
           </div>
           <Button
             shape="circle"
             icon={<MinusOutlined />}
-            onClick={handleMinusClick}
+            onClick={() => dispatch({ type: "product_minus" })}
           />
         </div>
       </div>
